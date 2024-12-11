@@ -1,68 +1,39 @@
-import socket
-import threading
-import sys
-import os
+import xmlrpc.client
 
-class Cliente():
-    def __init__(self, host="localhost", port=7000, DOWNLOAD_DIR='./download'):
-        try:
-            self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-            self.sock.connect((str(host), int(port)))
+# Conexión al Servidor 🌸🩰
+server = xmlrpc.client.ServerProxy("http://localhost:8000/")
 
-             # Crear el directorio de descarga si no existe
-            self.DOWNLOAD_DIR = DOWNLOAD_DIR
-            if not os.path.exists(self.DOWNLOAD_DIR):
-                os.makedirs(self.DOWNLOAD_DIR)
+# Menú de opciones y funciones remotas 🌸🩰
+opciones = {
+    1: ("Sumar", server.sumar),
+    2: ("Restar", server.restar),
+    3: ("Multiplicar", server.multiplicar),
+    4: ("Dividir", server.dividir)
+}
 
-            msg_recv = threading.Thread(target=self.msg_recv)
-            msg_recv.daemon = True 
-            msg_recv.start()
+def menu():
+    # Mostrar el menú de opciones al usuario 🌸🩰
+    print("\nCalculadora Remota")
+    for key, (nombre, _) in opciones.items():
+        print(f"{key}. {nombre}")
+    print("5. Salir")
+    return int(input("Selecciona una opción: "))
 
-            while True:
-                msg = input('-> ')
-                if msg.startswith('get '):  # Si es un comando para obtener un archivo
-                    filename = msg.split(' ', 1)[1]  # Extraer el nombre del archivo
-                    self.request_file(filename)  # Solicitar el archivo al servidor
-                elif msg != 'salir':
-                    self.send_msg(msg)
-                else:
-                    self.sock.close()
-                    sys.exit()
-        except Exception as e:
-            print(f"Error al conectar el socket: {e}")
-            
-    def msg_recv(self):
-        while True:
-            try:
-                data = self.sock.recv(4096).decode('utf-8')
-                if data:
-                    print(data)
-            except:
-                pass
+while True:
+    # Solicitar al usuario que seleccione una opción 🌸🩰
+    opcion = menu()
+    if opcion == 5:
+        # Finalizar la ejecución 🌸🩰
+        print("\u00a1Adiós! Mi tarea ha sido completada")
+        break
 
-
-    def send_msg(self,msg):
-        try:
-            self.sock.send(msg.encode('utf-8'))
-        except Exception as e:
-            print(f"Error al enviar mensaje: {e}")
-
-    def request_file(self, filename):
-        """Solicitar un archivo al servidor"""
-        try:
-            # Enviar el comando `get` para pedir el archivo
-            self.sock.send(f"get {filename}".encode('utf-8'))
-            
-            # Recibir el archivo en bloques de 4096 bytes
-            with open(os.path.join(self.DOWNLOAD_DIR, filename), 'wb') as f:
-                while True:
-                    data = self.sock.recv(4096)
-                    if not data:
-                        break
-                    f.write(data)
-
-            print(f"Archivo '{filename}' descargado en {self.DOWNLOAD_DIR}")
-        except Exception as e:
-            print(f"Error al recibir el archivo: {e}")
-            
-cliente = Cliente()
+    if opcion in opciones:
+        # Solicitar los números para la operación seleccionada 🌸🩰
+        num1 = float(input("Ingresa el primer número: "))
+        num2 = float(input("Ingresa el segundo número: "))
+        nombre, funcion = opciones[opcion]
+        # Mostrar el resultado de la operación 🌸🩰
+        print(f"Resultado: {funcion(num1, num2)}")
+    else:
+        # Indicar que la opción ingresada no es válida 🌸🩰
+        print("Opción no válida. Intenta de nuevo.")
